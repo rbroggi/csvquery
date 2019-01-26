@@ -52,6 +52,16 @@ std::vector<std::string> fetch_keys(const po::variables_map &vm, const std::stri
   return keys;
 }
 
+//print string vector
+void print_vector(const std::vector<std::string> &vec, const std::string &vec_name) {
+  std::cout << vec_name << ": " << "[" << vec.size() << "]{";
+  for (auto el : vec) {
+    std::cout << el <<", ";
+  }
+  std::cout << "}"  << "\n";
+}
+
+
 int main(int ac, char *av[]) {
 
   // Declare the supported options.
@@ -62,10 +72,10 @@ int main(int ac, char *av[]) {
       ("help,h", "produce help message")
       ("verbose,v", "verbosity") //todo implement verbosity
       ("delimiter,d", po::value<std::string>(), "delimiter")
-      ("keys,k", po::value<std::vector<std::string>>(), "aggregation keys")
-      ("metrics,m", po::value<std::vector<std::string>>(), "metrics")
-      ("addition_files,a", po::value<std::string>(), "addition file mask")
-      ("subtraction_files,s", po::value<std::string>(), "subtraction file mask")
+      ("keys,k", po::value<std::vector<std::string>>() -> multitoken(), "aggregation keys")
+      ("metrics,m", po::value<std::vector<std::string>>() -> multitoken(), "metrics")
+      ("addition_files,a", po::value<std::vector<std::string>>() -> multitoken(), "addition file mask")
+      ("subtraction_files,s", po::value<std::vector<std::string>>() -> multitoken(), "subtraction file mask")
       ("key_filters,kf", po::value<std::string>(), "key filters")
       ("metric_filters,mf", po::value<double>(), "metric filters")
       ("aliases,al", po::value<std::string>(), "alias for keys called in different forms on k")
@@ -88,24 +98,18 @@ int main(int ac, char *av[]) {
 
   // fetch keys
   std::vector<std::string> keys = fetch_keys(vm, "keys");
-
-  std::cout << "size: " << '\n';
-  std::cout << keys.size() << '\n';
-  for (auto el : keys) {
-    std::cout << "el: " << el << "\n";
-  }
+  print_vector(keys, "keys");
 
   //fetch metrics
   std::vector<std::string> metrics = fetch_keys(vm, "metrics");
-
-  std::cout << "size: " << '\n';
-  std::cout << metrics.size() << '\n';
-  for (auto el : metrics) {
-    std::cout << "el: " << el << "\n";
-  }
+  print_vector(metrics, "metrics");
 
   //fetch file masks
+  std::vector<std::string> addition_files = fetch_keys(vm, "addition_files");
+  print_vector(addition_files, "addition_files");
 
+  std::vector<std::string> subtraction_files = fetch_keys(vm, "subtraction_files");
+  print_vector(subtraction_files, "subtraction_files");
   //fetch key filters
 
   //fetch metric filters
