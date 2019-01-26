@@ -4,6 +4,7 @@
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 
+static const std::string DEFAULT_DELIMITER = "|";
 //KeyValue accumulator
 // template <class K, class V>
 // class KeyValueAccumulator {
@@ -17,27 +18,62 @@
 // };
 namespace po = boost::program_options;
 
+//delimiter fetcher
+const std::string& fetch_delimiter(const po::variables_map &vm) {
+  if (vm.count("delimiter")) {
+    try {
+      return vm["delimiter"].as<std::string>();
+    } catch (...) {
+      return DEFAULT_DELIMITER;
+    }
+  }
+  return DEFAULT_DELIMITER;
+}
+
+//keys fetcher
+std::vector<std::string> fetch_keys(const po::variables_map &vm, const std::string &variable_name) {
+  auto key_num = vm.count(variable_name);
+  std::vector<std::string> keys;
+  if (key_num)
+  {
+      //each key_group is a comma-separated list
+      for (auto key_group : vm[variable_name].as<std::vector<std::string>>()) {
+        std::vector<std::string> untrimmed_keys;
+        //splitting keys on commas
+        boost::split(untrimmed_keys, key_group, [](char c){return (c == ',' || c == ' ');});
+        //trim keys and fill the resulting keys
+        for (auto key : untrimmed_keys) {
+          boost::trim(key);
+          if (!key.empty()) keys.push_back(std::move(key));
+        }
+      }
+  }
+
+  return keys;
+}
+
 int main(int ac, char *av[]) {
 
   // Declare the supported options.
   po::options_description desc("Allowed options");
+
+  //todo enhance with examples
   desc.add_options()
       ("help,h", "produce help message")
-      ("keys,k", po::value<std::vector<std::string>>(), "aggregation keys")
+      ("verbose,v", "verbosity") //todo implement verbosity
       ("delimiter,d", po::value<std::string>(), "delimiter")
-      ("metrics,m", po::value<std::string>(), "metrics")
+      ("keys,k", po::value<std::vector<std::string>>(), "aggregation keys")
+      ("metrics,m", po::value<std::vector<std::string>>(), "metrics")
       ("addition_files,a", po::value<std::string>(), "addition file mask")
       ("subtraction_files,s", po::value<std::string>(), "subtraction file mask")
-      ("filters,f", po::value<std::string>(), "filters")
-      ("threshold,t", po::value<double>(), "threshold")
-      ("aliases,l", po::value<std::string>(), "alias for keys called in different forms on k")
+      ("key_filters,kf", po::value<std::string>(), "key filters")
+      ("metric_filters,mf", po::value<double>(), "metric filters")
+      ("aliases,al", po::value<std::string>(), "alias for keys called in different forms on k")
   ;
 
-  po::positional_options_description p;
-  p.add("a", -1);
 
   po::variables_map vm;
-  po::store(po::command_line_parser(ac, av).options(desc).positional(p).run(), vm);
+  po::store(po::parse_command_line(ac, av, desc), vm);
   po::notify(vm);
 
   if (vm.count("help")) {
@@ -45,18 +81,33 @@ int main(int ac, char *av[]) {
       return 1;
   }
 
-  if (vm.count("keys"))
-  {
-      std::cout << "keys: ";
-      for (auto key_group : vm["keys"].as<std::vector<std::string>>()) {
-        std::vector<std::string> keys;
-        boost::split(keys, key_group, [](char c){return (c == ',');});
-        for (auto key : keys) {
-          std::cout << key  << " ";
-        }
-      }
-      std::cout << "\n";
+  //fetch delimiter
+  std::string delimiter = fetch_delimiter(vm);
+
+  std::cout << "Delimiter: " << delimiter << "\n";
+
+  // fetch keys
+  std::vector<std::string> keys = fetch_keys(vm, "keys");
+
+  std::cout << "size: " << '\n';
+  std::cout << keys.size() << '\n';
+  for (auto el : keys) {
+    std::cout << "el: " << el << "\n";
   }
 
+  //fetch metrics
+  std::vector<std::string> metrics = fetch_keys(vm, "metrics");
+
+  std::cout << "size: " << '\n';
+  std::cout << metrics.size() << '\n';
+  for (auto el : metrics) {
+    std::cout << "el: " << el << "\n";
+  }
+
+  //fetch file masks
+
+  //fetch key filters
+
+  //fetch metric filters
 
 }
