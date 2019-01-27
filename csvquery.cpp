@@ -1,10 +1,13 @@
+#include "CSVRow.hpp"
+
 #include <iostream>
 #include <unordered_map>
 #include <utility>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 
-static const std::string DEFAULT_DELIMITER = "|";
+
+static const char DEFAULT_DELIMITER = '|';
 //KeyValue accumulator
 // template <class K, class V>
 // class KeyValueAccumulator {
@@ -18,11 +21,13 @@ static const std::string DEFAULT_DELIMITER = "|";
 // };
 namespace po = boost::program_options;
 
+bool verbose = false;
+
 //delimiter fetcher
-const std::string& fetch_delimiter(const po::variables_map &vm) {
+const char fetch_delimiter(const po::variables_map &vm) {
   if (vm.count("delimiter")) {
     try {
-      return vm["delimiter"].as<std::string>();
+      return vm["delimiter"].as<char>();
     } catch (...) {
       return DEFAULT_DELIMITER;
     }
@@ -53,7 +58,8 @@ std::vector<std::string> fetch_keys(const po::variables_map &vm, const std::stri
 }
 
 //print string vector
-void print_vector(const std::vector<std::string> &vec, const std::string &vec_name) {
+void log_vector(const std::vector<std::string> &vec, const std::string &vec_name) {
+  if (!verbose) return;
   std::cout << vec_name << ": " << "[" << vec.size() << "]{";
   for (auto el : vec) {
     std::cout << el <<", ";
@@ -61,6 +67,12 @@ void print_vector(const std::vector<std::string> &vec, const std::string &vec_na
   std::cout << "}"  << "\n";
 }
 
+//log string
+template<typename T>
+void log_str(const T &str, const std::string &str_name) {
+  if (!verbose) return;
+  std::cout << str_name << ": " << str << '\n';
+}
 
 int main(int ac, char *av[]) {
 
@@ -70,8 +82,8 @@ int main(int ac, char *av[]) {
   //todo enhance with examples
   desc.add_options()
       ("help,h", "produce help message")
-      ("verbose,v", "verbosity") //todo implement verbosity
-      ("delimiter,d", po::value<std::string>(), "delimiter")
+      ("verbose,v", po::bool_switch(&verbose), "verbosity") //todo implement verbosity
+      ("delimiter,d", po::value<char>(), "delimiter")
       ("keys,k", po::value<std::vector<std::string>>() -> multitoken(), "aggregation keys")
       ("metrics,m", po::value<std::vector<std::string>>() -> multitoken(), "metrics")
       ("addition_files,a", po::value<std::vector<std::string>>() -> multitoken(), "addition file mask")
@@ -92,26 +104,32 @@ int main(int ac, char *av[]) {
   }
 
   //fetch delimiter
-  std::string delimiter = fetch_delimiter(vm);
+  char delimiter = fetch_delimiter(vm);
 
-  std::cout << "Delimiter: " << delimiter << "\n";
+  log_str(delimiter, "delimiter");
 
   // fetch keys
   std::vector<std::string> keys = fetch_keys(vm, "keys");
-  print_vector(keys, "keys");
+  log_vector(keys, "keys");
 
   //fetch metrics
   std::vector<std::string> metrics = fetch_keys(vm, "metrics");
-  print_vector(metrics, "metrics");
+  log_vector(metrics, "metrics");
 
   //fetch file masks
   std::vector<std::string> addition_files = fetch_keys(vm, "addition_files");
-  print_vector(addition_files, "addition_files");
+  log_vector(addition_files, "addition_files");
 
   std::vector<std::string> subtraction_files = fetch_keys(vm, "subtraction_files");
-  print_vector(subtraction_files, "subtraction_files");
-  //fetch key filters
+  log_vector(subtraction_files, "subtraction_files");
 
+  // std::ifstream       file("plop.csv");
+  //
+  // for(CSVIterator loop(file); loop != CSVIterator(); ++loop)
+  // {
+  //     std::cout << "4th Element(" << (*loop)[3] << ")\n";
+  // }
+  //fetch key filters
   //fetch metric filters
 
 }
