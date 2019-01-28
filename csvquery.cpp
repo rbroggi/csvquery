@@ -1,24 +1,15 @@
 #include "CSVRow.hpp"
+#include "CSVFetcher.hpp"
 
 #include <iostream>
+#include <fstream>
 #include <unordered_map>
 #include <utility>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 
-
 static const char DEFAULT_DELIMITER = '|';
-//KeyValue accumulator
-// template <class K, class V>
-// class KeyValueAccumulator {
-//   private:
-//     std::unordered_map<K, V> accumulator;
-//   public:
-//     KeyValueAccumulator();
-//     void add_item(const std::pair<K, V> &);
-//     V retrieve_element(const &K);
-//     std::vector<std::pair<K, V> >& retrieve_elements();
-// };
+
 namespace po = boost::program_options;
 
 bool verbose = false;
@@ -123,6 +114,35 @@ int main(int ac, char *av[]) {
   std::vector<std::string> subtraction_files = fetch_keys(vm, "subtraction_files");
   log_vector(subtraction_files, "subtraction_files");
 
+  //todo parsing alias option
+  std::unordered_map<std::string, std::string> aliases;
+  for (auto fName : addition_files) {
+    std::ifstream       file(fName);
+
+    CSVFetcher inputFetcher(file,
+          keys,
+          metrics,
+          aliases,
+          delimiter);
+
+    std::unordered_map<std::string,std::unordered_map<std::string,double>> aggregated = inputFetcher.retrieve_aggregation_results();
+
+    //header print
+    for (auto key_name : keys) std::cout << key_name << delimiter;
+    for (auto metric_name : metrics) std::cout << metric_name << delimiter;
+    for (auto fake : metrics) {
+      for (auto entry : aggregated[fake]) {
+
+        std::cout << entry.first;
+        for (auto metric_name : metrics) {
+          auto map = aggregated[metric_name];
+          std::cout << map[entry.first] << delimiter;
+        }
+      }
+      break;
+    }
+
+  }
   // std::ifstream       file("plop.csv");
   //
   // for(CSVIterator loop(file); loop != CSVIterator(); ++loop)

@@ -75,6 +75,7 @@ class CSVFetcher
         for (auto key : keys) {
           auto row_index = key_to_index.at(key);
           auto row_element = row[row_index];
+          final_key+=_delimiter;
           final_key.append(row_element);
         }
         return final_key;
